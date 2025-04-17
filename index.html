@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Line Grid Pattern</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="lineGridCanvas"></canvas>
+    
+    <script>
+        // Parse URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Get parameters with defaults
+        const backgroundColor = urlParams.get('bg') || '#180A00';
+        const lineColor = urlParams.get('lineColor') || 'rgb(239, 103, 0)';
+        const animationEnabled = urlParams.get('animate') !== 'false';
+        const animationSpeed = parseFloat(urlParams.get('speed') || '1');
+        const sideAnimationProbability = parseInt(urlParams.get('sideProb') || '80');
+        const centerAnimationProbability = parseInt(urlParams.get('centerProb') || '30');
+        const maxSideOpacity = parseInt(urlParams.get('sideOpacity') || '80');
+        const maxCenterOpacity = parseInt(urlParams.get('centerOpacity') || '56');
+        
+        // Canvas setup
+        const canvas = document.getElementById('lineGridCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas dimensions
+        function resizeCanvas() {
+            const dpr = window.devicePixelRatio || 1;
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            
+            ctx.scale(dpr, dpr);
+            
+            // Reinitialize lines when resized
+            initializeLines();
+        }
+        
+        // Initialize on load and resize
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Lines array
+        let lines = [];
+        
+        function initializeLines() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            // Define zones (left, center, right)
+            const leftZoneWidth = width * 0.25;
+            const rightZoneStart = width * 0.75;
+            
+            // Line properties
+            const lineHeight = 12;
+            const verticalSpacing = 28; // 12px line + 16px gap
+            const horizontalSpacing = 25; // 1px line + 24px gap
+            
+            // Initialize lines
+            lines = [];
+            
+            for (let x = 0; x < width; x += horizontalSpacing) {
+                for (let y = 0; y < height; y += verticalSpacing) {
+                    // Determine which zone the line is in
+                    let zone = "center";
+                    if (x < leftZoneWidth) zone = "left";
+                    else if (x >= rightZoneStart) zone = "right";
+                    
+                    // Determine if this line should animate based on zone
+                    const animationProbability =
+                        zone === "center"
+                            ? centerAnimationProbability / 100
+                            : sideAnimationProbability / 100;
+                    
+                    const shouldAnimate = Math.random() < animationProbability;
+                    
+                    // Set initial opacity (between 8% and 32%)
+                    const initialOpacity = 0.08 + Math.floor(Math.random() * 4) * 0.08;
+                    
+                    // Set max opacity based on zone
+                    const maxOpacity =
+                        zone === "center"
+                            ? 0.08 + Math.floor(Math.random() * (maxCenterOpacity / 8)) * 0.08
+                            : maxSideOpacity / 100;
+                    
+                    // Add random phase offset for natural looking animation
+                    const phaseOffset = Math.random() * Math.PI * 2;
+                    
+                    lines.push({
+                        x,
+                        y,
+                        height: lineHeight,
+                        opacity: initialOpacity,
+                        maxOpacity,
+                        shouldAnimate,
+                        zone,
+                        phaseOffset,
+                        animationDirection: 1, // 1 for increasing opacity, -1 for decreasing
+                    });
+                }
+            }
+        }
+        
+        // Animation function
+        function animate(time) {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            // Clear canvas
+            ctx.fillStyle = backgroundColor;
+            ctx.fillRect(0, 0, width, height);
+            
+            // Update and draw each line
+            lines.forEach((line) => {
+                if (line.shouldAnimate && animationEnabled) {
+                    // Calculate new opacity using sine wave for smooth transition
+                    const speed = animationSpeed * 0.001;
+                    const oscillation = Math.sin(time * speed + line.phaseOffset) * 0.5 + 0.5;
+                    line.opacity = 0.08 + oscillation * (line.maxOpacity - 0.08);
+                }
+                
+                // Parse the line color to handle both hex and rgb formats
+                let finalColor;
+                if (lineColor.startsWith('rgb')) {
+                    finalColor = lineColor.replace('rgb', 'rgba').replace(')', `, ${line.opacity})`);
+                } else {
+                    // Convert hex to rgba
+                    const hex = lineColor.replace('#', '');
+                    const r = parseInt(hex.substring(0, 2), 16);
+                    const g = parseInt(hex.substring(2, 4), 16);
+                    const b = parseInt(hex.substring(4, 6), 16);
+                    finalColor = `rgba(${r}, ${g}, ${b}, ${line.opacity})`;
+                }
+                
+                ctx.strokeStyle = finalColor;
+                ctx.beginPath();
+                ctx.moveTo(line.x, line.y);
+                ctx.lineTo(line.x, line.y + line.height);
+                ctx.stroke();
+            });
+            
+            // Continue animation loop
+            requestAnimationFrame(animate);
+        }
+        
+        // Initialize and start animation
+        resizeCanvas();
+        requestAnimationFrame(animate);
+    </script>
+</body>
+</html>
