@@ -26,15 +26,15 @@
         // Parse URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         
-        // Get parameters with defaults
-        const backgroundColor = urlParams.get('bg') || '#180A00';
+        // Get parameters with updated defaults based on screenshot
+        const backgroundColor = urlParams.get('bg') || '#190802';
         const lineColor = urlParams.get('lineColor') || 'rgb(239, 103, 0)';
         const animationEnabled = urlParams.get('animate') !== 'false';
-        const animationSpeed = parseFloat(urlParams.get('speed') || '1');
+        const animationSpeed = parseFloat(urlParams.get('speed') || '2.0');
         const sideAnimationProbability = parseInt(urlParams.get('sideProb') || '80');
-        const centerAnimationProbability = parseInt(urlParams.get('centerProb') || '30');
+        const centerAnimationProbability = parseInt(urlParams.get('centerProb') || '80');
         const maxSideOpacity = parseInt(urlParams.get('sideOpacity') || '80');
-        const maxCenterOpacity = parseInt(urlParams.get('centerOpacity') || '56');
+        const maxCenterOpacity = parseInt(urlParams.get('centerOpacity') || '80');
         
         // Canvas setup
         const canvas = document.getElementById('lineGridCanvas');
